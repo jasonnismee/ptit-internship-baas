@@ -8,5 +8,11 @@
 - [x] Cài đặt môi trường: WSL2 (Ubuntu), Docker Desktop, VS Code.
 - [x] Khởi tạo Git Repository theo chuẩn cấu trúc DevOps.
 - [x] Mời giảng viên vào Repo.
-- [ ] Nghiên cứu: So sánh kiến trúc Ethereum Private vs Hyperledger Fabric (CLO1).
-- [ ] Nghiên cứu: Lý thuyết, các khái niệm về công nghệ sử dụng.
+- [x] Nghiên cứu: So sánh kiến trúc Ethereum Private vs Hyperledger Fabric.
+- [x] Nghiên cứu: Lý thuyết, các khái niệm về công nghệ sử dụng.
+
+### Ngày 2/2/2026-3/2/2026
+- [] Tạo file generate_account.py
+- [] Tạo file genesis.json 
+- [] Tạo file service.yaml
+- [] Tạo file statefulset.yaml
