@@ -12,7 +12,7 @@
 - [x] Nghiên cứu: Lý thuyết, các khái niệm về công nghệ sử dụng.
 
 ### Ngày 2/2/2026-3/2/2026
-- [] Tạo file generate_account.py
-- [] Tạo file genesis.json 
-- [] Tạo file service.yaml
-- [] Tạo file statefulset.yaml
+- [x] Tạo file generate_account.py
+- [x] Tạo file genesis.json 
+- [x] Tạo file service.yaml
+- [x] Tạo file statefulset.yaml
