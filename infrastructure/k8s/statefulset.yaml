@@ -6,7 +6,7 @@ metadata:
     app: geth
 spec:
   serviceName: "geth-headless"
-  replicas: 1 
+  replicas: 3
   selector:
     matchLabels:
       app: geth
@@ -16,18 +16,21 @@ spec:
         app: geth
     spec:
       containers:
-     
+      # --- MAIN CONTAINER ---
       - name: geth
         image: ethereum/client-go:v1.13.5
         imagePullPolicy: IfNotPresent
         command: ["/bin/sh", "-c"]
-       
         args:
           - |
-            # Ghi password ra file tạm
+            # 1. Lấy IP động của Pod hiện tại
+            POD_IP=$(hostname -i)
+            echo "Starting Geth at IP: $POD_IP"
+
+            # 2. Tạo password file
             echo "password123" > /tmp/password.txt && \
             
-            # Chạy Geth với địa chỉ cố định
+            # 3. Chạy Geth với biến môi trường $POD_IP
             geth --datadir /data \
             --networkid 12345 \
             --http --http.addr "0.0.0.0" --http.api "eth,net,web3,personal,admin,miner" \
@@ -35,7 +38,9 @@ spec:
             --unlock 0x58Ab7B1D2ef5D060f1Df9AF811acd8F126C14F6E \
             --password /tmp/password.txt \
             --allow-insecure-unlock \
-            --nodiscover --nat extip:127.0.0.1
+            --nodiscover \
+            --nat extip:$POD_IP 
+        
         ports:
         - containerPort: 8545
         - containerPort: 30303
@@ -43,18 +48,16 @@ spec:
         - name: data
           mountPath: /data
 
+      # --- INIT CONTAINERS ---
       initContainers:
-      # Nhiệm vụ 1: Khởi tạo Genesis
       - name: init-genesis
         image: ethereum/client-go:v1.13.5
         command: ["/bin/sh", "-c"]
         args:
           - |
             if [ ! -d /data/geth ]; then
-              echo "Khoi tao Genesis..."
+              echo "Initializing Genesis..."
               geth init --datadir /data /config/genesis.json
-            else
-              echo "Du lieu da ton tai, bo qua init."
             fi
         volumeMounts:
         - name: data
@@ -62,7 +65,6 @@ spec:
         - name: genesis-config
           mountPath: /config
 
-      # Nhiệm vụ 2: Import Private Key 
       - name: import-account
         image: ethereum/client-go:v1.13.5
         command: ["/bin/sh", "-c"]
@@ -70,7 +72,6 @@ spec:
           - |
             echo "Importing Private Key..."
             echo "password123" > /tmp/password.txt
-            # Xóa keystore cũ nếu có để tránh trùng
             rm -rf /data/keystore
             geth account import --datadir /data --password /tmp/password.txt /etc/secret/key
         volumeMounts:
@@ -80,7 +81,6 @@ spec:
           mountPath: /etc/secret
           readOnly: true
 
-      # --- CẤU HÌNH VOLUME (Ổ CỨNG & FILE) ---
       volumes:
       - name: genesis-config
         configMap:
@@ -89,7 +89,6 @@ spec:
         secret:
           secretName: geth-account-key
 
-  # --- PVC TEMPLATE ---
   volumeClaimTemplates:
   - metadata:
       name: data
