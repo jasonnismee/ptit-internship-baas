@@ -27,19 +27,16 @@ spec:
             POD_IP=$(hostname -i)
             echo "Starting Geth at IP: $POD_IP"
 
-            # 2. Tạo password file
-            echo "password123" > /tmp/password.txt && \
-            
-            # 3. Chạy Geth với biến môi trường $POD_IP
+            # 2. Chạy Geth với biến môi trường $POD_IP
             geth --datadir /data \
             --networkid 12345 \
             --http --http.addr "0.0.0.0" --http.api "eth,net,web3,personal,admin,miner" \
             --mine --miner.etherbase 0x58Ab7B1D2ef5D060f1Df9AF811acd8F126C14F6E \
             --unlock 0x58Ab7B1D2ef5D060f1Df9AF811acd8F126C14F6E \
-            --password /tmp/password.txt \
+            --password /etc/geth-pass/password \
             --allow-insecure-unlock \
             --nodiscover \
-            --nat extip:$POD_IP 
+            --nat extip:$POD_IP
         
         ports:
         - containerPort: 8545
@@ -47,6 +44,9 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
+        - name: password-secret
+          mountPath: /etc/geth-pass
+          readOnly: true
 
       # --- INIT CONTAINERS ---
       initContainers:
@@ -71,14 +71,18 @@ spec:
         args:
           - |
             echo "Importing Private Key..."
-            echo "password123" > /tmp/password.txt
+            # Xóa keystore cũ
             rm -rf /data/keystore
-            geth account import --datadir /data --password /tmp/password.txt /etc/secret/key
+            # Import password
+            geth account import --datadir /data --password /etc/geth-pass/password /etc/secret/key
         volumeMounts:
         - name: data
           mountPath: /data
         - name: account-secret
           mountPath: /etc/secret
+          readOnly: true
+        - name: password-secret
+          mountPath: /etc/geth-pass
           readOnly: true
 
       volumes:
@@ -88,6 +92,9 @@ spec:
       - name: account-secret
         secret:
           secretName: geth-account-key
+      - name: password-secret
+        secret:
+          secretName: geth-pass
 
   volumeClaimTemplates:
   - metadata:

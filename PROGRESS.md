@@ -19,4 +19,13 @@
 
 ### Ngày 4/2/2026-5/2-2026
 - [x] Tạo file peer_nodes.py để peering các node.
-- [x] Fix file statefulset.yaml
+- [x] Fix file statefulset.yaml.
+
+### Ngày 8/2/2026
+- [x] Fix password trong statefulset.yaml.
+
+### Ngày 10/2/2026
+- [x] Đọc hiểu lại các file.
+
+### Ngày 25/2/2026
+- [x] Code backend.
