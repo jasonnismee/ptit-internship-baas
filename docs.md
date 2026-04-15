@@ -49,4 +49,4 @@ src/backend/
 2. FastAPI nhận request --> Tạo các file cấu hình .yaml
 3. FastAPI đẩy các file cấu hình vào Cluster
 4. Cluster tự động tải Docker Image của Geth về và dựng pods
-5. Các node
+5. Các nodes này tự tìm tới nhau và sync dữ liệu

@@ -106,4 +106,47 @@ class K8sService:
             "logs": logs
         }
 
+    def deploy_network(self, replicas: int = 3):
+        """Khởi tạo mạng lưới Blockchain động (BaaS) với YAML và tự động cấu hình replicas"""
+        from kubernetes import utils
+        import tempfile
+        
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+        k8s_dir = os.path.join(base_dir, "infrastructure", "k8s")
+        service_path = os.path.join(k8s_dir, "service.yaml")
+        statefulset_path = os.path.join(k8s_dir, "statefulset.yaml")
+        
+        results = []
+        
+        # 1. Apply Service
+        try:
+            utils.create_from_yaml(self.v1.api_client, service_path)
+            results.append("Đã tạo Headless Service")
+        except Exception as e:
+            results.append(f"Service info (có thể đã tồn tại): {str(e)}")
+            
+        # 2. Đọc YAML StatefulSet cũ, sửa chữ `replicas` và apply
+        try:
+            with open(statefulset_path, "r") as f:
+                content = f.read()
+                
+            # Thay đổi tham số "replicas: 3" (hoặc số khác) thành tham số mới
+            content = re.sub(r'replicas:\s*\d+', f'replicas: {replicas}', content)
+            
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".yaml") as tmp:
+                tmp.write(content)
+                tmp_path = tmp.name
+                
+            utils.create_from_yaml(self.v1.api_client, tmp_path)
+            os.remove(tmp_path)
+            results.append(f"Đã triển khai hệ thống Geth với {replicas} Nodes")
+        except Exception as e:
+            results.append(f"StatefulSet error: {str(e)}")
+            
+        return {
+            "status": "success",
+            "replicas_requested": replicas,
+            "actions": results
+        }
+
 k8s_service = K8sService()

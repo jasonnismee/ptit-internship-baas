@@ -8,7 +8,6 @@
 - [x] Cài đặt môi trường: WSL2 (Ubuntu), Docker Desktop, VS Code.
 - [x] Khởi tạo Git Repository theo chuẩn cấu trúc DevOps.
 - [x] Mời giảng viên vào Repo.
-- [x] Nghiên cứu: So sánh kiến trúc Ethereum Private vs Hyperledger Fabric.
 - [x] Nghiên cứu: Lý thuyết, các khái niệm về công nghệ sử dụng.
 
 ### Ngày 2/2/2026-3/2/2026
@@ -29,3 +28,9 @@
 
 ### Ngày 25/2/2026
 - [x] Code backend.
+
+### Ngày 15/4/2026
+- [x] Lên kế hoạch tính năng Backend Automation.
+- [x] Implement API `/network` để khởi tạo mạng tự động.
+- [x] Nâng cấp `k8s_service.py` để apply cấu hình tự động.
+- [x] Viết file template ArgoCD Application để phục vụ GitOps.
