@@ -29,8 +29,19 @@
 ### Ngày 25/2/2026
 - [x] Code backend.
 
-### Ngày 15/4/2026
+### Ngày 14/3/2026
 - [x] Lên kế hoạch tính năng Backend Automation.
-- [x] Implement API `/network` để khởi tạo mạng tự động.
+- [x] Implement API `/network` để khởi tạo mạng tự động (Scale & Patch 409).
 - [x] Nâng cấp `k8s_service.py` để apply cấu hình tự động.
-- [x] Viết file template ArgoCD Application để phục vụ GitOps.
+
+### Ngày 21/3/2026
+- [x] Thiết lập Deployment GitOps: Tạo Dockerfile, CI/CD Pipeline (GitHub Actions).
+- [x] Thiết lập RBAC và Deployment manifest để đưa Backend lên Kubernetes.
+
+### Ngày 28/3/2026
+- [x] Giao diện Dashboard Glassmorphism.
+- [x] Xây dựng Smart Contract Vinamilk và tích hợp Tracker lên Blockchain.
+- [x] Demo trên UI (Gồm Kịch bản Giết Node Auto-Healing và Kịch bản Rà soát Đồng thuận Toàn Mạng).
+
+### Ngày 15/4/2026
+- [x] Fix lại UI do kịch bản hoạt động chậm.
