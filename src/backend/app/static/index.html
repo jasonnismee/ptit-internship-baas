@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTIT BaaS Orchestrator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            background-image: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.15) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-3px);
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .input-group input {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-family: inherit;
+            outline: none;
+            flex: 1;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-peer {
+            background: var(--success);
+        }
+
+        .btn-peer:hover {
+            background: #059669;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Node Cards */
+        .nodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .node-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .node-card.running {
+            border-color: var(--success);
+            box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+
+        .node-card.pending {
+            border-color: var(--warning);
+        }
+
+        .node-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .node-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .node-ip {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .status-dot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .running .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .pending .status-dot {
+            background: var(--warning);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin-top: 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.6rem;
+            top: 0;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #a855f7;
+            box-shadow: 0 0 10px #a855f7;
+        }
+
+        .tl-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .tl-content {
+            font-weight: 600;
+            margin: 0.25rem 0;
+            color: #fff;
+        }
+
+        .tl-hash {
+            font-size: 0.75rem;
+            color: #a855f7;
+            font-family: monospace;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .logs {
+            background: #020617;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--success);
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PTIT BaaS Orchestrator</h1>
+            <p>One-click Blockchain Infrastructure Deployment ⚡</p>
+        </div>
+
+        <div class="grid-layout">
+            <!-- Cột trái: Điều khiển K8s -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="glass-panel">
+                    <h2 class="panel-title">⚙️ 1. Kubernetes Provisioning</h2>
+                    <div class="input-group">
+                        <input type="number" id="replicas" value="4" min="1" max="10" placeholder="Số lượng Node">
+                        <button class="btn" onclick="deployNetwork()">Deploy Cluster 🚀</button>
+                    </div>
+                </div>
+
+                <div class="glass-panel">
+                    <h2 class="panel-title">🌐 2. P2P Mesh Networking</h2>
+                    <button class="btn btn-peer" onclick="peerNodes()">Auto-Sync Enodes 🔗</button>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 10px;">Cơ chế Auto-Discovery
+                        quét IP và đồng bộ sổ cái.</div>
+                </div>
+
+                <div class="glass-panel" style="flex: 1;">
+                    <h2 class="panel-title">📊 Live K8s Cluster View</h2>
+                    <div class="nodes-grid" id="nodes-grid">
+                        <div
+                            style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                            Đang tải dữ liệu cụm...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Vinamilk & Logs -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="glass-panel" style="border-color: rgba(168, 85, 247, 0.4);">
+                    <h2 class="panel-title">🥛 3. Vinamilk Blockchain Traceability</h2>
+                    <div class="input-group">
+                        <input type="text" id="milkData" placeholder="Ghi lộ trình sữa (VD: Xuất kho...)">
+                        <button class="btn" style="background: #a855f7;" onclick="trackVinamilk()">Ghi Sổ Cái
+                            📝</button>
+                    </div>
+                    <div class="timeline" id="timeline">
+                        <!-- Timeline items gieo ở đây -->
+                    </div>
+                </div>
+
+                <div class="glass-panel">
+                    <h2 class="panel-title" style="font-size: 1rem;">System Logs Console</h2>
+                    <div class="logs" id="console"></div>
+                </div>
+            </div>
+
+            <!-- Hàng dưới: Kịch bản Khảo thí -->
+            <div class="glass-panel" style="border-color: #ef4444; grid-column: 1/-1;">
+                <h2 class="panel-title">🎭 4. Tính Năng Demo Bảo Vệ Đồ Án (Hội Đồng Khảo Thí)</h2>
+                <div class="grid-layout" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                        <h3 style="margin-top:0; font-size: 1rem; color: #f87171;">A. Fault Tolerance (Cơ Chế Phục Hồi)
+                        </h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted)">Giả lập máy chủ bị cháy phần cứng hoặc
+                            mất kết nối. Kubernetes sẽ tự động điều hướng, xây lại Node mới đắp vào mạng (Zero
+                            Downtime).</p>
+                        <button class="btn" style="background: #ef4444; width: 100%;" onclick="simulateCrash()">Giết
+                            Ngẫu Nhiên 1 Node 💥</button>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                        <h3 style="margin-top:0; font-size: 1rem; color: #60a5fa;">B. Blockchain Consensus (Tính Minh
+                            Bạch)</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted)">Quét xác minh chéo Giao dịch trên TẤT CẢ
+                            Máy chủ rời rạc. Bản ghi Vinamilk phải đồng nhất 100% trên toàn bộ các Node, chứng tỏ độ
+                            Trust tuyệt đối.</p>
+                        <div style="display:flex; justify-content:space-between; gap:0.5rem;">
+                            <input type="text" id="verifyHash" placeholder="Nhập TxHash vào đây..."
+                                style="flex:1; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); color: #fff; border-radius: 6px; padding: 0.5rem; outline:none;">
+                            <button class="btn" style="background: #3b82f6; white-space:nowrap;"
+                                onclick="verifyConsensus()">Verify Mạng 🔍</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            B23DCCN345 - Trịnh Đặng Huy Hoàng | Blockchain Internship Project
+        </div>
+    </div>
+
+    <script>
+        function log(msg, type = "info") {
+            const consoleDiv = document.getElementById("console");
+            const entry = document.createElement("div");
+            entry.style.color = type === "error" ? "#f87171" : "var(--success)";
+            const time = new Date().toLocaleTimeString();
+            entry.innerText = `[${time}] ${msg}`;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        async function deployNetwork() {
+            const replicas = document.getElementById("replicas").value;
+            log(`Deploying ${replicas} nodes to Kubernetes Local...`);
+            document.getElementById("nodes-grid").innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Khởi tạo lệnh gỡ YAML...</div>';
+            try {
+                const res = await fetch("/api/v1/network", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ replicas: parseInt(replicas) })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    log(`[SUCCESS] K8s StatefulSet Applied (${replicas} Nodes)`);
+                } else log("Lỗi: " + JSON.stringify(data), "error");
+                fetchNodes();
+            } catch (e) { log(`Error: ${e.message}`, "error"); }
+        }
+
+        async function peerNodes() {
+            log("Running Auto-Discovery Enode P2P...");
+            try {
+                const res = await fetch("/api/v1/peer", { method: "POST" });
+                const data = await res.json();
+                if (data.status === "success") data.logs.forEach(l => log(`SYNC: ${l}`));
+                else log("Peering failed", "error");
+            } catch (e) { log(`Error: ${e.message}`, "error"); }
+        }
+
+        async function fetchNodes() {
+            try {
+                const res = await fetch("/api/v1/nodes");
+                const nodes = await res.json();
+                const grid = document.getElementById("nodes-grid");
+
+                if (nodes.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 0.9rem;">Cụm Server hiện đang trống. Cần khởi tạo Network.</div>';
+                    return;
+                }
+
+                // Sort by name node-0 -> node-x
+                nodes.sort((a, b) => a.name.localeCompare(b.name));
+
+                grid.innerHTML = "";
+                nodes.forEach(n => {
+                    const isRunning = n.status === "Running";
+                    grid.innerHTML += `
+                        <div class="node-card ${isRunning ? 'running' : 'pending'}">
+                            <div class="status-dot"></div>
+                            <div class="node-icon">🖥️</div>
+                            <div class="node-name">${n.name}</div>
+                            <div class="node-ip">${n.ip || 'Booting up...'}</div>
+                        </div>
+                    `;
+                });
+            } catch (e) { }
+        }
+
+        async function fetchHistory() {
+            try {
+                const res = await fetch("/api/v1/vinamilk/history");
+                const data = await res.json();
+                if (data.status === "success" && data.data.length > 0) {
+                    const tl = document.getElementById("timeline");
+                    tl.innerHTML = "";
+                    data.data.forEach(item => {
+                        tl.innerHTML += `
+                            <div class="timeline-item">
+                                <div class="tl-time">${item.time} (Verified via K8s)</div>
+                                <div class="tl-content">${item.message}</div>
+                                <div class="tl-hash">⟠ Tx: ${item.tx_hash}</div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (e) { }
+        }
+
+        async function trackVinamilk() {
+            const input = document.getElementById("milkData");
+            if (!input.value) return;
+            const msg = input.value; input.value = '';
+            log(`Mining data to Ledger: "${msg}"...`);
+
+            try {
+                const res = await fetch("/api/v1/vinamilk/track", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    log(`Mined Block Tx: ${data.tx_hash.substring(0, 15)}...`);
+                    // Tự động dán luôn mã TxHash vào ô Giám chứng (Giao diện Khảo thí) để đỡ phải Copy chép bằng tay.
+                    document.getElementById("verifyHash").value = data.tx_hash;
+                    // Nạp lại toàn bộ lịch sử từ API (để đảm bảo đồng bộ)
+                    fetchHistory();
+                } else {
+                    log("Ledger Record Failed", "error");
+                }
+            } catch (e) { log(`Error: ${e.message}`, "error"); }
+        }
+
+        async function simulateCrash() {
+            log("Executing Chaos Engineering: Destroying a random Pod...");
+            try {
+                const res = await fetch("/api/v1/demo/crash", { method: "POST" });
+                const data = await res.json();
+                if (data.status === "success") log(`[CHAOS] ${data.message}`, "error");
+                else log("Demo failed: " + JSON.stringify(data), "error");
+                fetchNodes();
+            } catch (e) { }
+        }
+
+        async function verifyConsensus() {
+            const hash = document.getElementById("verifyHash").value;
+            if (!hash) return log("Vui lòng nhập hoặc dán TxHash cần tra cứu!", "error");
+            log(`Broadcasting verification request for Tx: ${hash.substring(0, 10)}... across all nodes.`);
+            try {
+                const res = await fetch("/api/v1/demo/verify", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tx_hash: hash })
+                });
+                const data = await res.json();
+                if (data.status === "success") {
+                    data.consensus.forEach(c => log(`[VERIFIER] ${c}`, "info"));
+                } else log("Verify failed", "error");
+            } catch (e) { }
+        }
+
+        // Khởi động các hàm tự động quét khi tải trang
+        fetchNodes();
+        fetchHistory();
+        setInterval(fetchNodes, 2000);
+
+        log("System Ready. Connected to Cluster Engine.");
+    </script>
+</body>
+
+</html>
