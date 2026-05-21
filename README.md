@@ -22,7 +22,6 @@
 | **Mã sinh viên** | B23DCCN345 |
 | **Giảng viên hướng dẫn** | ThS. Nguyễn Xuân Đức |
 | **Học phần** | Thực tập cơ sở — INT13147 |
-| **Phiên bản hệ thống** | v1.5.0 |
 
 ---
 
