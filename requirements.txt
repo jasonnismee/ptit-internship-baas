@@ -1,8 +1,23 @@
+# fastapi và server
 fastapi==0.109.0
-uvicorn==0.27.0
+uvicorn[standard]==0.27.0
+
+# kubernetes python client
 kubernetes==29.0.0
+
+# blockchain / web3
 web3==6.15.0
+
+# smart contract compiler
+py-solc-x==2.0.2
+
+# cấu hình và môi trường
 pydantic-settings==2.1.0
 python-dotenv==1.0.1
-py-solc-x==2.0.2
+
+# xử lý form / file upload
 python-multipart==0.0.9
+
+# tiện ích
+pyyaml==6.0.1
+requests==2.31.0

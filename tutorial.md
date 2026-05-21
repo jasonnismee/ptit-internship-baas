@@ -1,8 +1,6 @@
 # Hướng dẫn chi tiết dự án Blockchain-as-a-Service (BaaS) Orchestrator 2.0
 
-Dự án này là một nền tảng **Cloud Infrastructure (IaaS/BaaS)**, hoạt động như một "Đài chỉ huy Không gian mạng" (Cybernetic Command Center) cho phép tự động hóa hoàn toàn việc triển khai và quản lý các mạng lưới Blockchain (Geth) trên hạ tầng Kubernetes.
-
-## 🌟 Các tính năng cốt lõi (Dành cho báo cáo/thuyết trình)
+## Các tính năng cốt lõi
 
 1. **Khởi tạo Mạng Blockchain "1 Click" (Multi-tenancy):**
    Tạo ra vô số mạng lưới Private Blockchain độc lập chỉ bằng việc nhập Tên mạng và Số Node. K8s sẽ tự động sinh mã và cấp phát tài nguyên riêng biệt.
@@ -93,4 +91,4 @@ npm install react-force-graph-2d
 npm run dev
 ```
 
-🎉 **XONG!** Bây giờ bạn chỉ cần truy cập `http://localhost:3000`, toàn bộ đài chỉ huy không gian mạng sẽ hiện ra trước mắt bạn!
+**XONG!** Bây giờ bạn chỉ cần truy cập `http://localhost:3000`, toàn bộ đài chỉ huy không gian mạng sẽ hiện ra trước mắt bạn!
