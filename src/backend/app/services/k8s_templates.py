@@ -105,6 +105,7 @@ spec:
         ports:
         - containerPort: 8545
         - containerPort: 30303
+        - containerPort: 6060
         resources:
           limits:
             memory: "512Mi"

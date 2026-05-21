@@ -63,7 +63,7 @@ function AppProvider({ children }: { children: React.ReactNode }) {
       });
       
       setLogs(prev => {
-        const injectedMocks = prev.filter(l => l.startsWith("INFO ["));
+        const injectedMocks = prev.filter(l => l.startsWith("INFO [") || l.startsWith("WARN ["));
         return [...lg.data.logs, ...injectedMocks].slice(-50);
       });
     } catch (e) {
@@ -92,7 +92,11 @@ function AppProvider({ children }: { children: React.ReactNode }) {
       }, 1000);
       
       setTimeout(() => {
-        setLogs(prev => [...prev, `INFO [${new Date().toLocaleTimeString()}] Mined new block #${metrics.blockHeight + 1}.`].slice(-50));
+        if (newTx.status === 'CONFIRMED') {
+          setLogs(prev => [...prev, `INFO [${new Date().toLocaleTimeString()}] Mined new block #${metrics.blockHeight + 1}.`].slice(-50));
+        } else {
+          setLogs(prev => [...prev, `WARN [${new Date().toLocaleTimeString()}] Transaction pending consensus. Waiting for nodes to recover...`].slice(-50));
+        }
       }, 3000);
 
     } catch (e) {

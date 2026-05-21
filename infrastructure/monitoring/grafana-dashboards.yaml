@@ -28,15 +28,15 @@ data:
       "panels": [
         {
           "type": "timeseries",
-          "title": "CPU Activity (Go Routines)",
+          "title": "Block Height (Chiều cao khối)",
           "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-          "targets": [ { "expr": "go_goroutines", "refId": "A" } ]
+          "targets": [ { "expr": "chain_head_block", "refId": "A" } ]
         },
         {
           "type": "timeseries",
-          "title": "Memory Allocation (Bytes)",
+          "title": "Connected Peers (Số kết nối P2P)",
           "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-          "targets": [ { "expr": "go_memstats_alloc_bytes", "refId": "A" } ]
+          "targets": [ { "expr": "p2p_peers", "refId": "A" } ]
         }
       ]
     }
