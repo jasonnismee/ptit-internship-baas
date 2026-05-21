@@ -22,6 +22,17 @@ app = FastAPI(
     }
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
+# Đăng ký CORS để Frontend ở port 3000 có thể gọi API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Đăng ký router
 app.include_router(endpoints.router, prefix=settings.API_V1_STR) # <--- Dòng mới
 

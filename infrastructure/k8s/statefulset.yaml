@@ -31,8 +31,8 @@ spec:
             geth --datadir /data \
             --networkid 12345 \
             --http --http.addr "0.0.0.0" --http.api "eth,net,web3,personal,admin,miner" \
-            --mine --miner.etherbase 0x58Ab7B1D2ef5D060f1Df9AF811acd8F126C14F6E \
-            --unlock 0x58Ab7B1D2ef5D060f1Df9AF811acd8F126C14F6E \
+            --mine --miner.etherbase 0xe660105C765DE27a9095c1589368F4DEDaf1f9C4 \
+            --unlock 0xe660105C765DE27a9095c1589368F4DEDaf1f9C4 \
             --password /etc/geth-pass/password \
             --allow-insecure-unlock \
             --nodiscover \

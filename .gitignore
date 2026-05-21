@@ -6,3 +6,11 @@ venv/
 .idea/
 .vscode/
 secrets/
+node_modules/
+.next/
+*.log
+
+key.txt
+password.txt
+
+antigravity_export/
