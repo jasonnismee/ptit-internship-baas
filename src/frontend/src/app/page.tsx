@@ -20,7 +20,7 @@ function AppProvider({ children }: { children: React.ReactNode }) {
   const [totalNodesCount, setTotalNodesCount] = useState(0);
   const [minConsensus, setMinConsensus] = useState(4);
   const [isProcessingTx, setIsProcessingTx] = useState(false);
-  const [hackAlert, setHackAlert] = useState(false);
+
   const [txLight, setTxLight] = useState<string | null>(null); // Để trigger animation flow
   const [isInfraLoading, setIsInfraLoading] = useState(false);
 
@@ -108,21 +108,6 @@ function AppProvider({ children }: { children: React.ReactNode }) {
     }, 1000);
   };
 
-  const simulateHack = () => {
-    setHackAlert(true);
-    const newAlert = {
-      id: Math.random().toString(),
-      time: new Date().toLocaleTimeString(),
-      level: 'CRITICAL',
-      message: '[CRITICAL] Data mismatch detected. Tamper attempt rejected by consensus network.'
-    };
-    setInfraAlerts(prev => [newAlert, ...prev]);
-    setLogs(prev => [...prev, `[SECURITY] Rejecting invalid state transition from external source.`]);
-    
-    setTimeout(() => {
-      setHackAlert(false);
-    }, 3000);
-  };
 
   const createNetwork = async () => {
     setIsInfraLoading(true);
@@ -188,7 +173,7 @@ function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       activeTab, setActiveTab,
-      inventory, transactions, isProcessingTx, hackAlert, txLight, addTransaction, simulateHack,
+      inventory, transactions, isProcessingTx, txLight, addTransaction,
       nodes, topology, metrics, logs, infraAlerts, isInfraLoading, createNetwork, scaleNetwork, cleanupNetwork, crashRandomNode,
       activeNodesCount, totalNodesCount, minConsensus
     }}>
@@ -201,10 +186,39 @@ function AppProvider({ children }: { children: React.ReactNode }) {
 // 2. APP LAYER (VINAMILK - LIGHT THEME)
 // ==========================================
 function VinamilkAppLayer() {
-  const { inventory, transactions, addTransaction, isProcessingTx, hackAlert, simulateHack, txLight, nodes, activeNodesCount, totalNodesCount, minConsensus } = useContext(AppContext);
+  const { inventory, transactions, addTransaction, isProcessingTx, txLight, nodes, activeNodesCount, totalNodesCount, minConsensus } = useContext(AppContext);
   const [amount, setAmount] = useState(500);
   const [station, setStation] = useState('farm');
-  const [hackQuery, setHackQuery] = useState("UPDATE db_kho SET so_luong = 48000 WHERE id = 3");
+  
+  const [aiPrediction, setAiPrediction] = useState<any>(null);
+  const [isAILoading, setIsAILoading] = useState(false);
+
+  const getAIPrediction = async () => {
+    setIsAILoading(true);
+    try {
+      const res = await axios.get(`${API_BASE}/ai/supply-predict`);
+      if (res.data.status === "ok") {
+        setAiPrediction(res.data.prediction);
+      } else {
+        alert(res.data.error || "Lỗi AI API");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Không kết nối được AI API");
+    }
+    setIsAILoading(false);
+  };
+
+  const executeAIPrediction = () => {
+    if (!aiPrediction) return;
+    // Map station name back to format
+    const stationCode = aiPrediction.station === 'Trang trại → Nhà máy' ? 'farm' : aiPrediction.station === 'Nhà máy → Vận chuyển' ? 'factory' : 'transport';
+    setStation(stationCode);
+    setAmount(aiPrediction.amount);
+    // Execute automatically
+    addTransaction(stationCode, aiPrediction.amount);
+    setAiPrediction(null);
+  };
 
   const stations = [
     { id: 'farm', name: 'Trang trại', icon: <Database />, inv: inventory.farm },
@@ -249,6 +263,51 @@ function VinamilkAppLayer() {
           </div>
         </div>
 
+        {/* AI Supply Chain Assistant Widget */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-5 rounded-xl shadow-sm relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 opacity-5">
+            <Cpu className="w-48 h-48 text-blue-600" />
+          </div>
+          <div className="flex justify-between items-start relative z-10">
+            <div className="flex items-start space-x-3">
+              <div className="bg-blue-600 text-white p-2 rounded-lg">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-blue-900">AI Supply Chain Assistant</h2>
+                <p className="text-sm text-slate-600 mb-3">Sử dụng Google Gemini phân tích và cân bằng tồn kho</p>
+                
+                {aiPrediction ? (
+                  <div className="bg-white/80 border border-blue-200 p-4 rounded-lg shadow-sm w-full max-w-2xl">
+                    <div className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">Đề xuất từ AI:</p>
+                        <p className="text-sm text-slate-600 mt-1 italic">"{aiPrediction.recommendation}"</p>
+                        <div className="mt-3 flex items-center space-x-3 text-sm font-bold text-blue-700 bg-blue-100/50 p-2 rounded inline-flex">
+                          <span>{aiPrediction.station}</span>
+                          <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">+{aiPrediction.amount} hộp</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex space-x-3">
+                      <button onClick={executeAIPrediction} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center">
+                        <CheckCircle2 className="w-4 h-4 mr-2" /> Duyệt & Khởi tạo Giao dịch
+                      </button>
+                      <button onClick={() => setAiPrediction(null)} className="text-slate-500 hover:text-slate-700 px-3 py-2 text-sm font-medium">Bỏ qua</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={getAIPrediction} disabled={isAILoading} className="bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors flex items-center disabled:opacity-50">
+                    {isAILoading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Cpu className="w-4 h-4 mr-2" />} 
+                    {isAILoading ? 'AI đang suy nghĩ...' : 'Phân tích Dữ liệu Hiện tại'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Supply Chain Flowchart */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <h2 className="text-lg font-bold text-slate-700 mb-6 flex items-center"><Activity className="w-5 h-5 mr-2 text-blue-500"/> Luồng vận chuyển thực tế</h2>
@@ -261,7 +320,7 @@ function VinamilkAppLayer() {
                   {s.icon}
                 </div>
                 <div className="mt-3 font-bold text-slate-700">{s.name}</div>
-                <div className="text-sm text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded mt-1">{s.inv.toLocaleString()} Lít</div>
+                <div className="text-sm text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded mt-1">{s.inv.toLocaleString()} hộp</div>
               </div>
             ))}
           </div>
@@ -281,7 +340,7 @@ function VinamilkAppLayer() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-600">Số lượng (Lít)</label>
+                <label className="text-sm font-medium text-slate-600">Số lượng (hộp)</label>
                 <input type="number" value={amount} onChange={e=>setAmount(Number(e.target.value))} className="w-full mt-1 border border-slate-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
               </div>
               <button 
@@ -315,7 +374,12 @@ function VinamilkAppLayer() {
                   {transactions.map(tx => (
                     <tr key={tx.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
                       <td className="px-4 py-3 font-mono text-xs">{tx.time}</td>
-                      <td className="px-4 py-3 font-medium text-slate-700">{tx.station.toUpperCase()}</td>
+                      <td className="px-4 py-3 font-medium text-slate-700">
+                        {tx.station === 'farm' ? 'TRANG TRẠI → NHÀ MÁY' : 
+                         tx.station === 'factory' ? 'NHÀ MÁY → VẬN CHUYỂN' : 
+                         tx.station === 'transport' ? 'VẬN CHUYỂN → KHO TỔNG' : 
+                         tx.station.toUpperCase()}
+                      </td>
                       <td className="px-4 py-3 font-mono text-blue-600">+{tx.amount.toLocaleString()}</td>
                       <td className="px-4 py-3 font-mono text-xs text-slate-500 bg-slate-100 rounded px-2">{tx.txHash}</td>
                       <td className={`px-4 py-3 flex items-center text-xs font-bold ${tx.status === 'CONFIRMED' ? 'text-green-600' : 'text-orange-500'}`}>
@@ -327,45 +391,6 @@ function VinamilkAppLayer() {
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
-
-        {/* Hacker Console */}
-        <div className={`mt-6 border-2 rounded-xl overflow-hidden transition-all duration-300 ${hackAlert ? 'border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)]' : 'border-slate-800'}`}>
-          <div className="bg-slate-900 px-4 py-2 flex items-center justify-between">
-            <h3 className="text-red-400 font-mono text-sm font-bold flex items-center">
-              <Terminal className="w-4 h-4 mr-2" /> Kẻ gian tấn công Database (Mô phỏng Hack)
-            </h3>
-          </div>
-          <div className="bg-black p-4 space-y-4">
-            <div className="text-slate-400 font-mono text-xs mb-2">
-              -- Cố tình sửa đổi dữ liệu tồn kho ngoài Blockchain
-            </div>
-            <div className="flex space-x-2">
-              <span className="text-green-500 font-mono mt-2">root@db:~#</span>
-              <input 
-                type="text" 
-                value={hackQuery}
-                onChange={e=>setHackQuery(e.target.value)}
-                className="flex-1 bg-transparent border-none text-slate-300 font-mono outline-none"
-              />
-            </div>
-            <button 
-              onClick={simulateHack}
-              className="bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700 px-4 py-1.5 rounded font-mono text-sm transition-colors"
-            >
-              Thực thi Lệnh
-            </button>
-
-            {hackAlert && (
-              <div className="mt-4 p-3 bg-red-500/20 border border-red-500 rounded text-red-400 font-mono text-sm animate-pulse flex items-start">
-                <ShieldAlert className="w-5 h-5 mr-3 shrink-0" />
-                <div>
-                  <div className="font-bold">CẢNH BÁO XÂM PHẠM TOÀN VẸN DỮ LIỆU!</div>
-                  <div className="text-xs mt-1 text-red-300">Dòng dữ liệu bị từ chối bởi cơ chế đồng thuận của 4 Nodes Blockchain. Đã khôi phục trạng thái gốc. Kích hoạt báo động hạ tầng!</div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

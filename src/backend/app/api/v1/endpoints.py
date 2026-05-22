@@ -165,6 +165,77 @@ def create_vinamilk_tx(req: TransactionRequest, namespace: str = "default"):
     
     return {"status": "success", "tx": tx}
 
+@router.get("/ai/supply-predict")
+def ai_supply_predict():
+    """API: AI dự đoán chuỗi cung ứng bằng Google Gemini"""
+    import os
+    import json
+    from dotenv import load_dotenv
+    
+    # Load .env file explicitly
+    load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".env"))
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"error": "Missing GEMINI_API_KEY in src/backend/.env"}
+        
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        
+        # Cấu trúc prompt dựa trên dữ liệu thật
+        inventory = vinamilk_state["inventory"]
+        prompt = f'''Bạn là AI Tối ưu hóa Chuỗi cung ứng. 
+Dữ liệu tồn kho hiện tại (đơn vị: hộp sữa):
+- Trang trại (Farm): {inventory["farm"]}
+- Nhà máy (Factory): {inventory["factory"]}
+- Vận chuyển (Transport): {inventory["transport"]}
+- Kho tổng (Warehouse): {inventory["warehouse"]}
+
+Luật kinh doanh:
+1. Tổng số lượng hộp sữa ở tất cả các kho BẮT BUỘC phải luôn bằng đúng 50000 hộp (vì hệ thống là khép kín).
+2. Luồng luân chuyển bắt buộc: Farm -> Factory -> Transport -> Warehouse.
+
+Nhiệm vụ của bạn (Supply Chain): 
+- Nếu các kho đang có số lượng tương đối xấp xỉ nhau (cân bằng tốt), hãy giải thích rằng hệ thống đang ổn định và đề xuất chỉ chuyển một lượng rất nhỏ (khoảng 100 hộp) từ Trang trại đi để duy trì luồng.
+- Nếu có sự chênh lệch lớn (có kho cạn kiệt), hãy đề xuất chuyển từ kho có nhiều nhất sang kho đang thiếu (từ 500 đến 5000 hộp) đúng theo luồng luân chuyển.
+
+Trình bày kết quả CHỈ DƯỚI DẠNG JSON với cấu trúc sau (không dùng markdown):
+{{
+  "recommendation": "Câu giải thích ngắn gọn lý do (có thể khen ngợi nếu cân bằng)",
+  "station": "Trang trại → Nhà máy" hoặc "Nhà máy → Vận chuyển" hoặc "Vận chuyển → Kho tổng",
+  "amount": số_lượng_đề_xuất
+}}'''
+
+        # Tự động quét và chọn Model khả dụng
+        selected_model = None
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                if 'flash' in m.name or 'pro' in m.name:
+                    selected_model = m.name
+                    break
+                    
+        if not selected_model:
+            # Fallback lấy model đầu tiên hỗ trợ generateContent
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    selected_model = m.name
+                    break
+                    
+        if not selected_model:
+            return {"error": "Không tìm thấy AI Model nào khả dụng cho API Key này."}
+
+        model = genai.GenerativeModel(selected_model)
+        response = model.generate_content(prompt)
+        
+        # Parse JSON
+        result = json.loads(response.text.strip())
+        return {"status": "ok", "prediction": result, "model_used": selected_model}
+    except ImportError:
+        return {"error": "Library google-generativeai is not installed"}
+    except Exception as e:
+        return {"error": f"AI API Error: {str(e)}"}
+
 @router.get("/vinamilk/state")
 def get_vinamilk_state(namespace: str = "default"):
     pods = k8s_service.get_node_list(namespace)
